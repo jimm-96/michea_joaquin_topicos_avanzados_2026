@@ -1,0 +1,50 @@
+	--criterios propuestos
+	--total gastado en pedidos por cada cliente
+	--definiendo si es cliente frecuente, regular u ocacional
+	--frecuente(alto) para clientes que gastaron mas de 700
+	--regular (medio)para clientes que gastaron entre 300 y 700
+	--ocacional(bajo)para clientes que gastaron menos de 300
+DECLARE
+    v_contador NUMBER := 0;
+    v_max_clientes NUMBER := 3;
+    v_total_gastado NUMBER;
+    v_nombre_cliente VARCHAR2(50);
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('--- Clasificando a los clientes ---');
+    
+    -- Loop para iterar clientes
+    LOOP
+        v_contador := v_contador + 1;
+        
+        -- Subconsulta para guardar la suma del total gastado por cada cliente dentro de la variable v_total_gastado
+        SELECT SUM(Total) INTO v_total_gastado
+        FROM Pedidos
+        WHERE ClienteID = v_contador;
+	
+	-- Subconsulta para guardar el nombre del cliente actual en v_nombre_cliente.
+        SELECT Nombre INTO v_nombre_cliente
+        FROM Clientes
+        WHERE ClienteID = v_contador;
+        
+        -- Si un cliente no tiene pedidos, la función SUM retorna NULL. Se deja en 0.
+        IF v_total_gastado IS NULL THEN
+            v_total_gastado := 0;
+        END IF;
+
+        -- Estructuras condicionales para las categorias
+        IF v_total_gastado > 700 THEN
+            DBMS_OUTPUT.PUT_LINE('Cliente ' || v_nombre_cliente || ' es cliente frecuente. Total gastado: $' || v_total_gastado);
+        ELSIF v_total_gastado > 300 THEN
+            DBMS_OUTPUT.PUT_LINE('Cliente ' || v_nombre_cliente || ' es cliente regular. Total gastado: $' || v_total_gastado);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Cliente ' || v_nombre_cliente || ' es cliente ocacional. Total gastado: $' || v_total_gastado);
+        END IF;
+
+        -- Condición de salida del bucle
+        EXIT WHEN v_contador >= v_max_clientes;
+    END LOOP;
+    
+	--Salida en pantalla para verificar que se completo el loop correctamente
+    DBMS_OUTPUT.PUT_LINE('--- Fin del proceso ---');
+END;
+/
