@@ -29,4 +29,5 @@
 --un cursor explicito es un puntero que puede procesar todas las filas de una tabla, 
 --una por una al manejarla con FETCH y un ciclo LOOP.
 --Atributos: %NOTFOUND para manejar cuando se llega al final la tabla y arroja 
---fila NULL, es decir que no queden datos
+--fila NULL, es decir que no queden datos.
+--FETCH es para manejar cada atributo de cada fila y guardar cada uno en una variable
