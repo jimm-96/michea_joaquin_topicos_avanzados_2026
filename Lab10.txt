@@ -1,0 +1,124 @@
+--Actividad 1
+CREATE OR REPLACE PROCEDURE actualizar_total_pedidos (
+    p_ClienteID IN Pedidos.ClienteID%TYPE,
+    p_porcentaje IN NUMBER DEFAULT 10
+)
+IS
+    CURSOR cur_pedidos IS
+        SELECT PedidoID, Total
+        FROM Pedidos
+        WHERE ClienteID = p_ClienteID;
+    
+    v_PedidoID Pedidos.PedidoID%TYPE;
+    v_Total Pedidos.Total%TYPE;
+    v_nuevo_total Pedidos.Total%TYPE;
+    v_contador NUMBER := 0;
+    
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Iniciando actualización de pedidos ===');
+    DBMS_OUTPUT.PUT_LINE('ClienteID: ' || p_ClienteID);
+    DBMS_OUTPUT.PUT_LINE('Porcentaje de aumento: ' || p_porcentaje || '%');
+    DBMS_OUTPUT.PUT_LINE('');
+    
+    OPEN cur_pedidos;
+    
+    LOOP
+        FETCH cur_pedidos INTO v_PedidoID, v_Total;
+        
+        EXIT WHEN cur_pedidos%NOTFOUND;
+        
+        v_nuevo_total := v_Total * (1 + p_porcentaje / 100);
+        
+        UPDATE Pedidos
+        SET Total = v_nuevo_total
+        WHERE PedidoID = v_PedidoID;
+        
+        DBMS_OUTPUT.PUT_LINE('Pedido ID: ' || v_PedidoID || 
+                            ' | Total Anterior: $' || TO_CHAR(v_Total, '999.99') ||
+                            ' | Total Nuevo: $' || TO_CHAR(v_nuevo_total, '999.99'));
+        
+        v_contador := v_contador + 1;
+        
+    END LOOP;
+    
+    CLOSE cur_pedidos;
+    
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('=== Actualización completada ===');
+    DBMS_OUTPUT.PUT_LINE('Total de pedidos actualizados: ' || v_contador);
+    
+    COMMIT;
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: No se encontró cliente con ID: ' || p_ClienteID);
+        ROLLBACK;
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: ' || SQLCODE || ' - ' || SQLERRM);
+        ROLLBACK;
+END actualizar_total_pedidos;
+/
+
+-- Pruebas
+BEGIN
+    actualizar_total_pedidos(1);
+END;
+/
+
+BEGIN
+    actualizar_total_pedidos(2, 25);
+END;
+/
+
+BEGIN
+    actualizar_total_pedidos(3, 15);
+END;
+/
+
+SELECT PedidoID, ClienteID, Total, FechaPedido
+FROM Pedidos
+ORDER BY ClienteID, PedidoID;
+
+---------------------------------------------------------------
+--Actividad 2
+
+CREATE OR REPLACE PROCEDURE calcular_costo_detalle (
+    p_DetalleID IN NUMBER,
+    p_costo_total IN OUT NUMBER
+)
+IS
+    v_precio NUMBER;
+    v_cantidad NUMBER;
+    
+BEGIN
+    SELECT pr.Precio, dp.Cantidad
+    INTO v_precio, v_cantidad
+    FROM DetallesPedidos dp
+    JOIN Productos pr ON dp.ProductoID = pr.ProductoID
+    WHERE dp.DetalleID = p_DetalleID;
+    
+    p_costo_total := v_precio * v_cantidad;
+    
+    DBMS_OUTPUT.PUT_LINE('Detalle ID: ' || p_DetalleID || ' | Costo Total: $' || TO_CHAR(p_costo_total, '999.99'));
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: El detalle con ID ' || p_DetalleID || ' no existe');
+        p_costo_total := NULL;
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: ' || SQLCODE || ' - ' || SQLERRM);
+        p_costo_total := NULL;
+END calcular_costo_detalle;
+/
+
+-- Pruebas
+DECLARE
+    v_costo NUMBER;
+BEGIN
+    calcular_costo_detalle(1, v_costo);
+    IF v_costo IS NOT NULL THEN
+        DBMS_OUTPUT.PUT_LINE('Costo calculado: $' || TO_CHAR(v_costo, '999.99'));
+    END IF;
+END;
+/
+
