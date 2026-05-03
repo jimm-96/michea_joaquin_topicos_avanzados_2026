@@ -1,0 +1,78 @@
+-- Lab 5: cursores explicitos y objetos de base de datos
+------------------------------------------------------------------
+-- ACTIVIDAD 1: 
+-- Escribe un bloque anónimo que use un cursor explícito basado en un objeto 
+-- para listar 2 atributos de alguna clase, ordenados por uno de los atributos.
+
+create or replace type t_cliente as object (
+    ClienteID NUMBER,
+    Nombre VARCHAR2(100),
+    Ciudad VARCHAR2(50)
+);
+/
+DECLARE
+    -- Definir el cursor explícito basado en un objeto
+    CURSOR cursor_clientes IS
+        SELECT t_cliente(ClienteID, Nombre, Ciudad)
+        FROM Clientes
+        ORDER BY Nombre;
+    
+    -- Variable para almacenar el objeto del cursor
+    v_cliente   t_cliente;
+BEGIN
+    -- Abrir el cursor
+    OPEN cursor_clientes;
+    -- Recorrer el cursor
+    LOOP
+        FETCH cursor_clientes INTO v_cliente;
+        EXIT WHEN cursor_clientes%NOTFOUND;
+        
+        DBMS_OUTPUT.PUT_LINE('Nombre: ' || v_cliente.Nombre || ' | Ciudad: ' || v_cliente.Ciudad);
+    END LOOP;
+    -- Cerrar el cursor
+    CLOSE cursor_clientes;
+END;
+/
+-----------------------------------------------------------------------------  
+
+-- Actividad 2:
+-- Escribe un bloque anónimo que use un cursor explícito con parámetro basado en un objeto 
+-- para aumentar un 10% el total de la suma de algún atributo numérico de un elemento de una tabla 
+-- y muestre los valores originales y actualizados. Usa FOR UPDATE o usa función dentro del objeto.
+
+create or replace type t_pedido as object (
+    PedidoID NUMBER,
+    Total NUMBER
+);
+/
+DECLARE
+    -- Definir el cursor explícito con parámetro basado en un objeto
+    CURSOR cursor_pedidos (p_cliente_id NUMBER) IS
+        SELECT t_pedido(PedidoID, Total)
+        FROM Pedidos
+        WHERE ClienteID = p_cliente_id
+        FOR UPDATE;
+    
+    -- Variable para almacenar el objeto del cursor
+    v_pedido    t_pedido;
+    v_cliente_param     NUMBER := 1;
+    v_incremento        NUMBER := 0.10;
+BEGIN
+    -- Abrir el cursor con el parámetro y recorrerlo
+    OPEN cursor_pedidos(v_cliente_param);        
+    LOOP
+        FETCH cursor_pedidos INTO v_pedido;
+        EXIT WHEN cursor_pedidos%NOTFOUND;
+        
+        -- Calcular el nuevo total (10% de aumento)
+        v_pedido.Total := v_pedido.Total * (1 + v_incremento);
+        
+        -- Mostrar valores originales y calculados
+        DBMS_OUTPUT.PUT_LINE('Pedido ID: ' || v_pedido.PedidoID);
+        DBMS_OUTPUT.PUT_LINE('  Total Original: $' || (v_pedido.Total / (1 + v_incremento)));
+        DBMS_OUTPUT.PUT_LINE('  Total Nuevo (10%): $' || v_pedido.Total);
+    END LOOP;
+    -- Cerrar el cursor
+    CLOSE cursor_pedidos;
+END;
+/
