@@ -1,4 +1,4 @@
--- Lab 5: cursores explicitos y objetos de base de datos
+-- Lab 6: cursores explicitos y objetos de base de datos
 ------------------------------------------------------------------
 -- ACTIVIDAD 1: 
 -- Escribe un bloque anónimo que use un cursor explícito basado en un objeto 
