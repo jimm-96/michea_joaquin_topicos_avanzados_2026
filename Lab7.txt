@@ -1,0 +1,48 @@
+-- Lab 7: Procedimientos almacenados con parametros y excepciones
+------------------------------------------------------------------
+-- ACTIVIDAD 1: 
+-- Crea un procedimiento aumentar_precio_producto que reciba un ProductoID 
+-- y un porcentaje de aumento (como parámetros IN), y aumente el precio del producto en ese porcentaje. 
+-- Maneja la excepción si el producto no existe.
+
+CREATE OR REPLACE PROCEDURE aumentar_precio_producto (
+    p_producto_id IN NUMBER,
+    p_porcentaje_aumento IN NUMBER
+) AS
+    v_precio_actual Productos.Precio%TYPE;
+BEGIN
+    -- Obtener el precio actual del producto
+    SELECT Precio INTO v_precio_actual
+    FROM Productos
+    WHERE ProductoID = p_producto_id;
+
+    -- Aumentar el precio en el porcentaje especificado
+    UPDATE Productos
+    SET Precio = v_precio_actual * (1 + p_porcentaje_aumento / 100)
+    WHERE ProductoID = p_producto_id;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('El producto con ID ' || p_producto_id || ' no existe.');
+END;
+/
+
+-----------------------------------------------------------------------------
+-- ACTIVIDAD 2:
+-- Crea un procedimiento contar_pedidos_cliente que reciba un ClienteID (parámetro IN) y 
+-- devuelva la cantidad de pedidos de ese cliente (parámetro OUT). Si el cliente no tiene pedidos, devuelve 0.
+
+CREATE OR REPLACE PROCEDURE contar_pedidos_cliente (
+    p_cliente_id IN NUMBER,
+    p_cantidad_pedidos OUT NUMBER
+) AS 
+BEGIN
+    SELECT COUNT(*)
+    INTO p_cantidad_pedidos
+    FROM Pedidos
+    WHERE ClienteID = p_cliente_id;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_cantidad_pedidos := 0;
+END;
+/

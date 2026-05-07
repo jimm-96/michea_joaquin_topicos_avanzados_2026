@@ -1,0 +1,69 @@
+-- LAB5: Cursores Explícitos
+
+-- ACTIVIDAD 1: Cursor explícito que lista 2 atributos de Clientes
+-- Listar Nombre y Ciudad de todos los clientes, ordenados por Nombre
+
+DECLARE
+    -- Definir el cursor explícito
+    CURSOR cursor_clientes IS
+        SELECT Nombre, Ciudad
+        FROM Clientes
+        ORDER BY Nombre;
+    
+    -- Variables para almacenar los datos del cursor
+    v_nombre    Clientes.Nombre%TYPE;
+    v_ciudad    Clientes.Ciudad%TYPE;
+BEGIN
+    -- Abrir el cursor
+    OPEN cursor_clientes;
+    -- Recorrer el cursor
+    LOOP
+        FETCH cursor_clientes INTO v_nombre, v_ciudad;
+        EXIT WHEN cursor_clientes%NOTFOUND;
+        
+        DBMS_OUTPUT.PUT_LINE('Nombre: ' || v_nombre || ' | Ciudad: ' || v_ciudad);
+    END LOOP;
+    -- Cerrar el cursor
+    CLOSE cursor_clientes;
+END;
+/
+
+-----------------------------------------------------------------------------
+
+-- ACTIVIDAD 2: Cursor explícito con parámetro, FOR UPDATE
+-- Aumentar un 10% el Total de los Pedidos de un cliente específico
+-- Mostrar valores originales y actualizados
+
+DECLARE
+    CURSOR cursor_pedidos (p_cliente_id NUMBER) IS
+        SELECT PedidoID, Total
+        FROM Pedidos
+        WHERE ClienteID = p_cliente_id
+        FOR UPDATE;
+    
+    v_pedido_id         Pedidos.PedidoID%TYPE;
+    v_total_original    Pedidos.Total%TYPE;
+    v_total_nuevo       Pedidos.Total%TYPE;
+    v_cliente_param     NUMBER := 1;
+    v_incremento        NUMBER := 0.10;  -- 10%
+BEGIN
+    OPEN cursor_pedidos(v_cliente_param);
+    LOOP
+        FETCH cursor_pedidos INTO v_pedido_id, v_total_original;
+        EXIT WHEN cursor_pedidos%NOTFOUND;
+        
+        v_total_nuevo := v_total_original * (1 + v_incremento);
+        
+
+        DBMS_OUTPUT.PUT_LINE('Pedido ID: ' || v_pedido_id);
+        DBMS_OUTPUT.PUT_LINE('  Total Original: $' || v_total_original);
+        DBMS_OUTPUT.PUT_LINE('  Total Nuevo (10%): $' || v_total_nuevo);
+        
+        UPDATE Pedidos
+        SET Total = v_total_nuevo
+        WHERE CURRENT OF cursor_pedidos;
+    END LOOP;
+    CLOSE cursor_pedidos;
+    COMMIT;
+END;
+/
