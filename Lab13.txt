@@ -74,7 +74,7 @@ CREATE TABLE Dim_Ciudad (
 INSERT INTO Dim_Ciudad VALUES (1, 'Ciudad A');
 INSERT INTO Dim_Ciudad VALUES (2, 'Ciudad B');
 INSERT INTO Dim_Ciudad VALUES (3, 'Ciudad C');
--- Insertar datos en Fact_Pedidos (ejemplo)
+-- Insertar datos en Fact_Pedidos
 INSERT INTO Fact_Pedidos VALUES (1, 1, 500, TO_DATE('2023-01-15', 'YYYY-MM-DD'));
 INSERT INTO Fact_Pedidos VALUES (2, 2, 1500, TO_DATE('2023-02-20', 'YYYY-MM-DD'));
 INSERT INTO Fact_Pedidos VALUES (3, 3, 2000, TO_DATE('2024-03-10', 'YYYY-MM-DD'));
