@@ -1,0 +1,69 @@
+-- Lab 14: Ejerciccios de herencia en Base de Datos
+------------------------------------------------------------------
+-- ACTIVIDAD 1:
+--Crea un supertipo Vehiculo con atributos Marca y Año, y un método obtener_antiguedad. 
+--Luego, crea un subtipo Automovil que herede de Vehiculo, con un atributo adicional 
+--NumeroPuertas y un método descripcion que devuelva una cadena con los detalles del automóvil.
+
+-- Supertipo Vehiculo
+CREATE OR REPLACE TYPE Vehiculo AS OBJECT (
+    Marca VARCHAR2(50),
+    Año NUMBER,
+    MEMBER FUNCTION obtener_antiguedad RETURN NUMBER
+);
+/
+CREATE OR REPLACE TYPE BODY Vehiculo AS 
+    MEMBER FUNCTION obtener_antiguedad RETURN NUMBER IS
+    BEGIN
+        RETURN EXTRACT(YEAR FROM SYSDATE) - Año;
+    END;
+END;
+/
+-- Subtipo Automovil
+CREATE OR REPLACE TYPE Automovil UNDER Vehiculo (
+    NumeroPuertas NUMBER,
+    MEMBER FUNCTION descripcion RETURN VARCHAR2
+);
+/
+CREATE OR REPLACE TYPE BODY Automovil AS 
+    MEMBER FUNCTION descripcion RETURN VARCHAR2 IS
+    BEGIN
+        RETURN 'Marca: ' || Marca || ', Año: ' || Año || ', Puertas: ' || NumeroPuertas;
+    END;
+END;
+/
+
+-----------------------------------------------------------------------------
+-- ACTIVIDAD 2:
+--Crea un subtipo Camion que herede de Vehiculo, con un atributo adicional CapacidadCarga 
+--(en toneladas) y sobrescriba el método obtener_antiguedad para sumar 2 años adicionales 
+--(los camiones envejecen más rápido). Inserta un camión en la tabla Vehiculos y 
+--consulta su antigüedad y descripción.
+
+-- Subtipo Camion
+CREATE OR REPLACE TYPE Camion UNDER Vehiculo (
+    CapacidadCarga NUMBER,
+    OVERRIDING MEMBER FUNCTION obtener_antiguedad RETURN NUMBER
+);
+/
+CREATE OR REPLACE TYPE BODY Camion AS 
+    OVERRIDING MEMBER FUNCTION obtener_antiguedad RETURN NUMBER IS
+    BEGIN
+        RETURN (EXTRACT(YEAR FROM SYSDATE) - Año) + 2;
+    END;
+END;
+/
+-----------------------------------------------------------------------------
+-- Insertar un camión en la tabla Vehiculos
+CREATE TABLE Vehiculos OF Vehiculo;
+INSERT INTO Vehiculos VALUES (Vehiculo('Volvo', 2015));
+INSERT INTO Vehiculos VALUES (Camion('Scania', 2010, 15));
+
+-- Consultar antigüedad y descripción del camión
+SELECT v.Marca, v.Año, v.obtener_antiguedad() AS Antiguedad, 
+       CASE 
+           WHEN v IS OF (Camion) THEN CAST(v AS Camion).CapacidadCarga || ' toneladas' 
+           ELSE NULL 
+       END AS CapacidadCarga
+FROM Vehiculos v
+WHERE v IS OF (Camion);
